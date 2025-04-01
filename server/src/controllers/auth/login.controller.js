@@ -11,6 +11,7 @@ import {
 import prisma from "../../config/prisma.js";
 import redis from "../../config/redis.js";
 import { generateToken, loginSchema } from "../../services/auth.service.js";
+import sendVerificationEmail from "../../services/email.service.js";
 
 const login = async (req, res, next) => {
   const userAgent = req.headers["user-agent"];
@@ -26,6 +27,7 @@ const login = async (req, res, next) => {
   const { email, password } = result.data;
   const user = await prisma.user.findUnique({
     where: { email },
+    select: { id: true, fullName: true, password: true, isVerified: true },
   });
 
   if (!user) {
@@ -37,6 +39,11 @@ const login = async (req, res, next) => {
   if (!isMatched) {
     await setTimeout(1000);
     return res.status(401).json({ message: "Invalid email or password" });
+  }
+
+  if (!user.isVerified) {
+    await sendVerificationEmail(user.fullName, email);
+    return res.status(401).json({ message: "Please verify your account" });
   }
 
   const accessToken = generateToken({

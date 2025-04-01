@@ -3,21 +3,7 @@ import redis from "../../config/redis.js";
 import { checkTokenError, verifyToken } from "../../services/auth.service.js";
 
 const logout = async (req, res, next) => {
-  const refreshToken = req.cookies["__refresh_token__"];
-  if (!refreshToken) {
-    return res.status(401).json({ message: "Missing refresh token" });
-  }
-
-  let decoded;
-
-  try {
-    decoded = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
-  } catch (error) {
-    if (checkTokenError(error)) {
-      return res.status(401).json({ message: "Invalid or expired token" });
-    }
-  }
-
+  const decoded = req.decoded;
   const existingSessionId = decoded.sid;
   const existingSessionKey = `session:${existingSessionId}`;
   const session = await redis.get(existingSessionKey);

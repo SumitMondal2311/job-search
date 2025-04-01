@@ -10,7 +10,7 @@ const verificationTemplate = (name, code) => {
         <p style="color: #666; font-size: 16px;">
           If you did not request this, please ignore this email.
         </p>
-        <p style="color: #666; font-size: 12px;">
+        <p style="color: #666; font-size: 14px;">
           This code will expire in 2 hours.
         </p>
         <p style="color: #999; font-size: 14px; margin-top: 20px;">

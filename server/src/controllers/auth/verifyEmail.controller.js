@@ -21,8 +21,12 @@ const verifyEmail = async (req, res, next) => {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, isVerified: true },
   });
+
+  if (user.isVerified) {
+    return res.status(403).json({ message: "Account already verified" });
+  }
 
   if (!user) {
     return res.status(404).json({ message: "User not found" });
@@ -39,7 +43,8 @@ const verifyEmail = async (req, res, next) => {
   }
 
   const { code } = result.data;
-  const storedCode = await redis.get(`verification:${email}`);
+  const verificationKey = `verification:${email}`;
+  const storedCode = await redis.get(verificationKey);
   if (code !== storedCode) {
     return res.status(401).json({ message: "Incorrect code" });
   }
@@ -76,12 +81,17 @@ const verifyEmail = async (req, res, next) => {
     sameSite: "lax",
   });
 
-  await prisma.user.update({
-    where: { email },
-    data: { isVerified: true },
-  });
+  await Promise.all([
+    prisma.user.update({
+      where: { email },
+      data: { isVerified: true },
+    }),
+    redis.del(verificationKey),
+  ]);
 
-  res.status(200).json({ accessToken, message: "User verified successfully" });
+  res
+    .status(200)
+    .json({ accessToken, message: "Account verified successfully" });
 };
 
 export default verifyEmail;

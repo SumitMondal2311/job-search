@@ -29,7 +29,7 @@ const signup = async (req, res, next) => {
 
   res
     .status(201)
-    .json({ message: "Signed up successfully, please verify your email" });
+    .json({ message: "Signed up successfully, please verify your account" });
 };
 
 export default signup;

@@ -1,10 +1,17 @@
-import { ACCESS_TOKEN_SECRET } from "../config/env.js";
+import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "../config/env.js";
 import prisma from "../config/prisma.js";
 import redis from "../config/redis.js";
 import { checkTokenError, verifyToken } from "../services/auth.service.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
+    const refreshToken = req.cookies["__refresh_token__"];
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Missing refresh token" });
+    }
+
+    const decodedRefreshToken = verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
+
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
       return res.status(401).json({ message: "Missing auth header" });
@@ -24,16 +31,23 @@ const authMiddleware = async (req, res, next) => {
       return res.status(403).json({ message: "Access token revoked" });
     }
 
-    const decoded = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
+    const decodedAccessToken = verifyToken(accessToken, ACCESS_TOKEN_SECRET);
+
     const isUserExists = await prisma.user.findUnique({
-      where: { id: decoded.uid },
+      where: { id: decodedAccessToken.uid },
     });
 
     if (!isUserExists) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    req.decoded = decoded;
+    const existingSessionKey = `session:${decodedRefreshToken.sid}`;
+    const sessionData = await redis.get(existingSessionKey);
+    if (!sessionData) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    req.decoded = decodedRefreshToken;
 
     next();
   } catch (error) {
