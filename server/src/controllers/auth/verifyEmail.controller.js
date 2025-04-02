@@ -24,12 +24,12 @@ const verifyEmail = async (req, res, next) => {
     select: { id: true, isVerified: true },
   });
 
-  if (user.isVerified) {
-    return res.status(403).json({ message: "Account already verified" });
-  }
-
   if (!user) {
     return res.status(404).json({ message: "User not found" });
+  }
+
+  if (user.isVerified) {
+    return res.status(403).json({ message: "Account already verified" });
   }
 
   const userAgent = req.headers["user-agent"];
@@ -45,7 +45,7 @@ const verifyEmail = async (req, res, next) => {
   const { code } = result.data;
   const verificationKey = `verification:${email}`;
   const storedCode = await redis.get(verificationKey);
-  if (code !== storedCode) {
+  if (code != storedCode) {
     return res.status(401).json({ message: "Incorrect code" });
   }
 

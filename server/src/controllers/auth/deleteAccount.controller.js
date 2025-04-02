@@ -1,6 +1,7 @@
+import prisma from "../../config/prisma.js";
 import redis from "../../config/redis.js";
 
-const logout = async (req, res, next) => {
+const deleteAccount = async (req, res, next) => {
   const refreshToken = req.cookies["__refresh_token__"];
 
   const existingSessionId = req.decoded.sid;
@@ -18,7 +19,11 @@ const logout = async (req, res, next) => {
 
   res.cookie("__refresh_token__", "", { expires: new Date(0) });
 
-  res.status(200).json({ message: "Logged out successfully" });
+  await prisma.user.delete({
+    where: { id: req.decoded.uid },
+  });
+
+  res.status(200).json({ message: "Account deleted successfully" });
 };
 
-export default logout;
+export default deleteAccount;

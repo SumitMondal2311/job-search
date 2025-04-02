@@ -1,4 +1,5 @@
 import { Router } from "express";
+import deleteAccount from "../controllers/auth/deleteAccount.controller.js";
 import login from "../controllers/auth/login.controller.js";
 import logout from "../controllers/auth/logout.controller.js";
 import refreshToken from "../controllers/auth/refreshToken.controller.js";
@@ -17,5 +18,6 @@ AuthRouter.get("/refresh-token", handleAsync(refreshToken));
 AuthRouter.use(authMiddleware);
 
 AuthRouter.post("/logout", handleAsync(logout));
+AuthRouter.delete("/delete-account", handleAsync(deleteAccount));
 
 export default AuthRouter;

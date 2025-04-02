@@ -14,7 +14,7 @@ const sendVerificationEmail = async (name, email) => {
     const code = randomBytes(3).toString("hex").toUpperCase();
 
     const pipeline = redis.multi();
-    pipeline.set(`verification:${email}`, code, { ex: 60 * 60 * 2 });
+    pipeline.set(`verification:${email}`, code, { ex: 60 * 60 });
     pipeline.set(cooldownKey, "cooldown", { ex: 60 });
     await pipeline.exec();
 
